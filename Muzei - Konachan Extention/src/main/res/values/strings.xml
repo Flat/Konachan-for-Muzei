@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Muzei - Konachan Extension</string>
+    <string name="source_name">Konachan</string>
+    <string name="source_description">Anime wallpapers</string>
+</resources>

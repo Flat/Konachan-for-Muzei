@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.chokoreto.muzei.konachan" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        >
+        <service
+            android:name="com.chokoreto.muzei.konachan.KonachanArtSource"
+            android:description="@string/source_description"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/source_name" >
+            <intent-filter>
+                <action android:name="com.google.android.apps.muzei.api.MuzeiArtSource" />
+            </intent-filter>
+
+            <meta-data
+                android:name="color"
+                android:value="#000" />
+            <meta-data
+                android:name="settingsActivity"
+                android:value="com.chokoreto.muzei.konachan.SettingsActivity"/>
+        </service>
+
+        <activity
+            android:name="com.chokoreto.muzei.konachan.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:exported="true">
+        </activity>
+    </application>
+
+</manifest>

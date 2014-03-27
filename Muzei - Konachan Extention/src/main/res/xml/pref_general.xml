@@ -1,0 +1,59 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Image Selection">
+    <EditTextPreference
+        android:key="tags"
+        android:title="@string/pref_tags"
+        android:defaultValue="@string/pref_default_tags"
+        android:selectAllOnFocus="true"
+        android:inputType="textCapWords"
+        android:capitalize="words"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <ListPreference
+        android:key="pref_sort_order"
+        android:title="@string/pref_title_sort_order"
+        android:defaultValue="order:score"
+        android:entries="@array/pref_sort_options"
+        android:entryValues="@array/pref_sort_options_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Refresh Settings">
+        <ListPreference
+            android:key="pref_refresh_time"
+            android:title="@string/pref_refresh_time_title"
+            android:defaultValue="90"
+            android:entries="@array/pref_refresh_time_options"
+            android:entryValues="@array/pref_refresh_time_values"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null" />
+        <CheckBoxPreference
+            android:key="pref_wifi"
+            android:title="@string/pref_wifi"
+            android:defaultValue="false"
+            android:summaryOff="Will refresh wallaper without Wi-Fi enabled"
+            android:summaryOn="Will only refresh wallpaper while connected to Wi-Fi"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Content">
+    <CheckBoxPreference
+        android:key="pref_restrict_content"
+        android:title="@string/pref_restrict_content_title"
+        android:defaultValue="true"
+        android:summaryOn="Restricts content to only safe"
+        android:summaryOff="Non-safe images are currently allowed"
+        />
+    </PreferenceCategory>
+<!--
+    <ListPreference
+        android:key="pref_rating_select"
+        android:title="@string/pref_rating_select_title"
+        android:defaultValue="-1"
+        android:entries="@array/pref_rating_options"
+        android:entryValues="@array/pref_rating_options_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+-->
+
+</PreferenceScreen>
