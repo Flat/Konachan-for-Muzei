@@ -30,6 +30,7 @@ public class SettingsActivity extends PreferenceActivity {
         bindPreferenceSummaryToValue(findPreference("tags"));
         bindPreferenceSummaryToValue(findPreference("pref_sort_order"));
         bindPreferenceSummaryToValue(findPreference("pref_refresh_time"));
+        bindPreferenceSummaryToValue(findPreference("pref_booru"));
     }
 
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
@@ -41,8 +42,6 @@ public class SettingsActivity extends PreferenceActivity {
 
             }
             if (preference instanceof ListPreference) {
-                // For list preferences, look up the correct display value in
-                // the preference's 'entries' list.
                 ListPreference listPreference = (ListPreference) preference;
                 int index = listPreference.findIndexOfValue(stringValue);
 

@@ -1,5 +1,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="Image Selection">
+    <ListPreference
+        android:key="pref_booru"
+        android:title="@string/pref_booru_title"
+        android:defaultValue="0"
+        android:entries="@array/pref_booru_selections"
+        android:entryValues="@array/pref_booru_selections_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
     <EditTextPreference
         android:key="tags"
         android:title="@string/pref_tags"
@@ -45,5 +53,8 @@
         android:summaryOff="Non-safe images are currently allowed"
         />
     </PreferenceCategory>
+<!--
+
+-->
 
 </PreferenceScreen>

@@ -25,12 +25,15 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.List;
 
 import retrofit.ErrorHandler;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
+import retrofit.http.QueryMap;
 
 import com.chokoreto.muzei.konachan.KonachanService.Posts;
 import com.google.android.apps.muzei.api.UserCommand;
@@ -86,7 +89,20 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 if (!fDir.exists()){
                     fDir.mkdirs();
                 }
-                File file = new File(fDir, dlArt.getTitle() + ".png");
+                String fileName;
+                String fileExtention;
+                if (dlArt.getTitle().length() > 200)
+                {
+                    fileName = dlArt.getTitle();
+                    fileExtention = ".png";
+                    fileName = fileName.substring(0,200);
+                }
+                else
+                {
+                    fileName = dlArt.getTitle();
+                    fileExtention = ".png";
+                }
+                File file = new File(fDir, fileName + fileExtention);
                 FileOutputStream fOut = new FileOutputStream(file);
                 dlImage.compress(Bitmap.CompressFormat.PNG, 100, fOut);
                 fOut.flush();
@@ -106,7 +122,7 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                         new NotificationCompat.Builder(this)
                                 .setSmallIcon(R.drawable.ic_launcher)
                                 .setContentTitle("Muzei - Konachan")
-                                .setContentText("Download failed.");
+                                .setContentText("Download failed. "+ e.getLocalizedMessage());
                 NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 mNotificationManager.notify(mID, mBuilder.build());
 
@@ -116,7 +132,8 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                         new NotificationCompat.Builder(this)
                                 .setSmallIcon(R.drawable.ic_launcher)
                                 .setContentTitle("Muzei - Konachan")
-                                .setContentText("Download failed.");
+                                .setContentText("Download failed. ");
+                Log.e(TAG,e.getLocalizedMessage());
                 NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 mNotificationManager.notify(mID, mBuilder.build());
             }
@@ -137,12 +154,16 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 return;
             }
         }
+        String serverBooru = config.getBooru();
+        String strHyperText = config.getHyperTextProtocol(serverBooru);
         RestAdapter restAdapter = new RestAdapter.Builder()
-                .setServer("https://konachan.net")
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setEndpoint(strHyperText + serverBooru)
                 .setErrorHandler(new ErrorHandler() {
                     @Override
                     public Throwable handleError(RetrofitError retrofitError) {
                         int statusCode = retrofitError.getResponse().getStatus();
+                        Log.e(TAG,retrofitError.getUrl()+ "\n"+ retrofitError.getBody());
                         if (retrofitError.isNetworkError() || (500 <= statusCode && statusCode < 600)) {
                             return new RetryException();
                         }
@@ -151,9 +172,18 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                     }
                 })
                 .build();
+        Map<String, String> mapQueries = new HashMap<String, String>(200);
+        if (serverBooru.equals("gelbooru.com")){
+            mapQueries.put("page","dapi");
+            mapQueries.put("s","post");
+            mapQueries.put("q","index");
+            mapQueries.put("json","1");
+        }
+        mapQueries.put("tags",config.strBuilder());
+        mapQueries.put("limit",Config.limit);
 
         KonachanService service = restAdapter.create(KonachanService.class);
-        List<Posts> response = service.getPopularPosts(config.strBuilder(), Config.limit);
+        List<Posts> response = service.getPopularPosts(config.getAPIString(serverBooru),mapQueries);
 
         if (response == null) {
             throw new RetryException();
@@ -181,9 +211,9 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 .imageUri(Uri.parse(post.file_url))
                 .token(token)
                 .viewIntent(new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("http://konachan.net/post/show/" + post.id)))
+                        Uri.parse(config.getURLForLink(serverBooru) + post.id)))
                 .build());
-
+        Log.w(TAG,post.file_url);
         scheduleUpdate(System.currentTimeMillis() + ROTATE_TIME_MILLIS);
     }
 }

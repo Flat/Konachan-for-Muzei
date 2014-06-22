@@ -10,10 +10,10 @@
         <item>Widescreen Last</item>
     </string-array>
     <string-array name="pref_sort_options_values">
-        <item>order:score</item>
-        <item>order:fav</item>
-        <item>order:wide</item>
-        <item>order:nonwide</item>
+        <item>score</item>
+        <item>fav</item>
+        <item>wide</item>
+        <item>nonwide</item>
     </string-array>
     <string name="pref_rating_select_title">Rating</string>
     <string name="pref_restrict_content_title">Restrict Content</string>
@@ -37,4 +37,15 @@
         <item>4320</item>
     </string-array>
     <string name="pref_wifi">Only Update on Wi-Fi</string>
+    <string name="pref_booru_title">Booru</string>
+    <string-array name="pref_booru_selections">
+        <item>konachan.com</item>
+        <item>gelbooru.com</item>
+  <!--      <item>danbooru.donmai.us</item> -->
+    </string-array>
+    <string-array name="pref_booru_selections_values">
+        <item>konachan.com</item>
+        <item>gelbooru.com</item>
+   <!--     <item>danbooru.donmai.us</item> -->
+    </string-array>
 </resources>
