@@ -31,6 +31,6 @@ repositories {
 dependencies {
     compile 'com.android.support:appcompat-v7:+'
     compile 'com.google.android.apps.muzei:muzei-api:+'
-    compile 'com.squareup.retrofit:retrofit:1.4.1'
+    compile 'com.squareup.retrofit:retrofit:1.6.0'
     compile 'com.android.support:support-v4:19.0.0'
 }
