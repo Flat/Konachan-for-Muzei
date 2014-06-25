@@ -7,7 +7,6 @@ Android app to pull wallpapers from Konachan using Muzei
 
 
 ##Building
-============
 
 Clone this repo
 
