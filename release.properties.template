@@ -1,0 +1,4 @@
+keyStore=path/to/keystore
+keyStorePassword=passWORD
+keyAlias=keyAlias
+keyAliasPassword=passWORD
