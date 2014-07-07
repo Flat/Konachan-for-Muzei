@@ -67,77 +67,89 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
             downloadArtwork();
         }
     }
-    public void downloadArtwork(){
-        if (getCurrentArtwork() != null){
-            Artwork dlArt = getCurrentArtwork();
-            try {
-                NotificationCompat.Builder mBuilder =
-                        new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_launcher)
-                                .setContentTitle("Muzei - Konachan")
-                                .setContentText("Download started.");
-                NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                mNotificationManager.notify(mID, mBuilder.build());
-                URL dlTarget = new URL(dlArt.getImageUri().toString());
-                HttpURLConnection hCon = (HttpURLConnection)dlTarget.openConnection();
-                hCon.setDoInput(true);
-                hCon.connect();
-                InputStream is = hCon.getInputStream();
-                Bitmap dlImage = BitmapFactory.decodeStream(is);
-                String fPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Muzei - Konachan";
-                File fDir = new File(fPath);
-                if (!fDir.exists()){
-                    fDir.mkdirs();
+ public void downloadArtwork(Artwork dlArt){
+    try {
+        NotificationCompat.Builder mBuilder =
+        new NotificationCompat.Builder(this)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("Downloading Wallpaper")
+            .setContentText("Download in progress");
+        NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        new Thread(
+            new Runnable() {
+             @Override
+             public void run() {
+                long recieved = 0;
+                long conLength;
+                try {
+                    URL dlTarget = new URL(dlArt.getImageUri().toString());
+                    HttpURLConnection hCon = (HttpURLConnection)dlTarget.openConnection();
+                    hCon.setDoInput(true);
+                    hCon.connect();
+                    conLength = hCon.getContentLength();
+                    InputStream is = hCon.getInputStream();
+                    BufferedInputStream bis = new BufferedInputStream(is)
+                    Byte data = new Byte[1024];
+                    String fPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Muzei - Konachan";
+                    File fDir = new File(fPath);
+                    if (!fDir.exists()){
+                         fDir.mkdirs();
+                    }
+                    String fileName;
+                    String fileExtention;
+                    if (dlArt.getTitle().length() > 200)
+                    {
+                        fileName = dlArt.getTitle();
+                        fileExtention = ".png";
+                        fileName = fileName.substring(0,200);
+                    }
+                    else
+                    {
+                        fileName = dlArt.getTitle();
+                        fileExtention = ".png";
+                    }
+                    File file = new File(fDir, fileName + fileExtention);
+                    FileOutputStream fOut = new FileOutputStream(file);
+                    int percentComplete =0;
+                    while((count = bis.read(data)) != -1)){
+                        recieved += count;
+                        percentComplete = recieved(100/conLength);
+                        mBuilder.setProgress(100, percentComplete, false);
+                        mNotificationManager.notify(mID, mBuilder.build());
+                        fOut.write(data, 0, count);
+                    }
+                    fOut.flush();
+                    fOut.close();
+                    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    intent.setData(Uri.fromFile(file));
+                    sendBroadcast(intent);
+                    mBuilder.setContentText("Download complete")
+                        .setProgress(0,0,false);
+                    mNotifyManager.notify(id, mBuilder.build());
                 }
-                String fileName;
-                String fileExtention;
-                if (dlArt.getTitle().length() > 200)
-                {
-                    fileName = dlArt.getTitle();
-                    fileExtention = ".png";
-                    fileName = fileName.substring(0,200);
-                }
-                else
-                {
-                    fileName = dlArt.getTitle();
-                    fileExtention = ".png";
-                }
-                File file = new File(fDir, fileName + fileExtention);
-                FileOutputStream fOut = new FileOutputStream(file);
-                dlImage.compress(Bitmap.CompressFormat.PNG, 100, fOut);
-                fOut.flush();
-                fOut.close();
-                mBuilder = new NotificationCompat.Builder(this)
+                catch(MalformedURLException e){
+                    Log.e(TAG, "Bad URL: " + e.getMessage());
+                    NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle("Muzei - Konachan")
-                        .setContentText("Download complete!");
-                mNotificationManager.notify(mID,mBuilder.build());
-                Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                intent.setData(Uri.fromFile(file));
-                sendBroadcast(intent);
+                        .setContentText("Download failed");
+                    NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    mNotificationManager.notify(mID, mBuilder.build());
+                }
+                catch(IOException e){
+                    NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
+                         .setSmallIcon(R.drawable.ic_launcher)
+                        .setContentTitle("Muzei - Konachan")
+                        .setContentText("Download failed");
+                    Log.e(TAG,e.getLocalizedMessage());
+                    NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    mNotificationManager.notify(mID, mBuilder.build());
+                }
             }
-            catch(MalformedURLException e){
-                Log.e(TAG, "Bad URL: " + e.getMessage());
-                NotificationCompat.Builder mBuilder =
-                        new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_launcher)
-                                .setContentTitle("Muzei - Konachan")
-                                .setContentText("Download failed. "+ e.getLocalizedMessage());
-                NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                mNotificationManager.notify(mID, mBuilder.build());
-
-            }
-            catch(IOException e){
-                NotificationCompat.Builder mBuilder =
-                        new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_launcher)
-                                .setContentTitle("Muzei - Konachan")
-                                .setContentText("Download failed. ");
-                Log.e(TAG,e.getLocalizedMessage());
-                NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                mNotificationManager.notify(mID, mBuilder.build());
-            }
-        }
+        }).start();
+    }
     }
     @Override
     protected void onTryUpdate(int reason) throws RetryException {
