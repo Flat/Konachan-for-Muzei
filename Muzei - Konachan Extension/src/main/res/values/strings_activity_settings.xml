@@ -8,12 +8,14 @@
         <item>Favorited</item>
         <item>Widescreen First</item>
         <item>Widescreen Last</item>
+        <item>none</item>
     </string-array>
     <string-array name="pref_sort_options_values">
         <item>score</item>
         <item>fav</item>
         <item>wide</item>
         <item>nonwide</item>
+        <item>none</item>
     </string-array>
     <string name="pref_rating_select_title">Rating</string>
     <string name="pref_restrict_content_title">Restrict Content</string>
