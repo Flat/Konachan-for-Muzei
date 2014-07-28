@@ -1,6 +1,8 @@
 package com.chokoreto.muzei.konachan;
 
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -17,6 +19,7 @@ import android.util.Log;
 import com.google.android.apps.muzei.api.Artwork;
 import com.google.android.apps.muzei.api.RemoteMuzeiArtSource;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -64,23 +67,23 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
     @Override
     public void onCustomCommand(int i){
         if(i == 1337){
-            downloadArtwork();
+            downloadArtwork(getCurrentArtwork());
         }
     }
- public void downloadArtwork(Artwork dlArt){
+ public void downloadArtwork(final Artwork dlArt){
     try {
-        NotificationCompat.Builder mBuilder =
+        final NotificationCompat.Builder mBuilder =
         new NotificationCompat.Builder(this)
             .setSmallIcon(R.drawable.ic_launcher)
             .setContentTitle("Downloading Wallpaper")
             .setContentText("Download in progress");
-        NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        final NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         new Thread(
             new Runnable() {
              @Override
              public void run() {
-                long recieved = 0;
-                long conLength;
+                int received = 0;
+                int conLength;
                 try {
                     URL dlTarget = new URL(dlArt.getImageUri().toString());
                     HttpURLConnection hCon = (HttpURLConnection)dlTarget.openConnection();
@@ -88,33 +91,35 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                     hCon.connect();
                     conLength = hCon.getContentLength();
                     InputStream is = hCon.getInputStream();
-                    BufferedInputStream bis = new BufferedInputStream(is)
-                    Byte data = new Byte[1024];
+                    BufferedInputStream bis = new BufferedInputStream(is);
+                    byte[] data = new byte[1024];
                     String fPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Muzei - Konachan";
                     File fDir = new File(fPath);
                     if (!fDir.exists()){
                          fDir.mkdirs();
                     }
                     String fileName;
-                    String fileExtention;
+                    String fileExtension;
                     if (dlArt.getTitle().length() > 200)
                     {
                         fileName = dlArt.getTitle();
-                        fileExtention = ".png";
+                        fileExtension = ".png";
                         fileName = fileName.substring(0,200);
                     }
                     else
                     {
                         fileName = dlArt.getTitle();
-                        fileExtention = ".png";
+                        fileExtension = ".png";
                     }
-                    File file = new File(fDir, fileName + fileExtention);
+                    File file = new File(fDir, fileName + fileExtension);
                     FileOutputStream fOut = new FileOutputStream(file);
-                    int percentComplete =0;
-                    while((count = bis.read(data)) != -1)){
-                        recieved += count;
-                        percentComplete = recieved(100/conLength);
-                        mBuilder.setProgress(100, percentComplete, false);
+                    float percentComplete =0;
+                    int count =0;
+                    while((count = bis.read(data)) != -1){
+                        received += count;
+                        percentComplete = Math.round(((received*100)/conLength));
+                        mBuilder.setProgress(100, Math.round(percentComplete), false);
+                        mBuilder.setContentText(Integer.toString((int)Math.round(percentComplete)) + "% complete");
                         mNotificationManager.notify(mID, mBuilder.build());
                         fOut.write(data, 0, count);
                     }
@@ -123,33 +128,57 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                     Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                     intent.setData(Uri.fromFile(file));
                     sendBroadcast(intent);
+                    Intent resultIntent = new Intent();
+                    resultIntent.setAction(Intent.ACTION_VIEW);
+                    resultIntent.setDataAndType(Uri.fromFile(file), "image/*");
+                    PendingIntent resultPendingIntent = PendingIntent.getActivity(getApplicationContext() , 0, resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+                    mBuilder.setContentIntent(resultPendingIntent);
                     mBuilder.setContentText("Download complete")
-                        .setProgress(0,0,false);
-                    mNotifyManager.notify(id, mBuilder.build());
+                        .setProgress(0, 0, false);
+                    mBuilder.setLargeIcon(decodeSampledBitmapFromFile(file, 150, 150));
+                    mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(decodeSampledBitmapFromFile(file,675, 337)));
+                    Notification note = mBuilder.build();
+                    note.flags = Notification.FLAG_AUTO_CANCEL;
+                    mNotificationManager.notify(mID, note);
                 }
                 catch(MalformedURLException e){
                     Log.e(TAG, "Bad URL: " + e.getMessage());
                     NotificationCompat.Builder mBuilder =
-                    new NotificationCompat.Builder(this)
+                    new NotificationCompat.Builder(getApplicationContext())
                         .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle("Muzei - Konachan")
                         .setContentText("Download failed");
                     NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                     mNotificationManager.notify(mID, mBuilder.build());
+                    Log.e(TAG, e.getMessage());
                 }
                 catch(IOException e){
                     NotificationCompat.Builder mBuilder =
-                    new NotificationCompat.Builder(this)
-                         .setSmallIcon(R.drawable.ic_launcher)
+                    new NotificationCompat.Builder(getApplicationContext())
+                        .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle("Muzei - Konachan")
                         .setContentText("Download failed");
-                    Log.e(TAG,e.getLocalizedMessage());
                     NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                     mNotificationManager.notify(mID, mBuilder.build());
+                    Log.e(TAG,e.getMessage());
                 }
+                 catch(Exception e){
+                     NotificationCompat.Builder mBuilder =
+                             new NotificationCompat.Builder(getApplicationContext())
+                                     .setSmallIcon(R.drawable.ic_launcher)
+                                     .setContentTitle("Muzei - Konachan")
+                                     .setContentText("Download failed");
+                     NotificationManager mNotificationManager =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                     mNotificationManager.notify(mID, mBuilder.build());
+                     Log.e(TAG,e.getMessage());
+                     Log.e(TAG, "Exception: ", e);
+                 }
             }
         }).start();
     }
+    catch (Exception ex){
+         Log.e(TAG, ex.getMessage());
+     }
     }
     @Override
     protected void onTryUpdate(int reason) throws RetryException {
@@ -227,5 +256,40 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 .build());
         Log.w(TAG,post.file_url);
         scheduleUpdate(System.currentTimeMillis() + ROTATE_TIME_MILLIS);
+    }
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+    public static Bitmap decodeSampledBitmapFromFile(File file, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
     }
 }
