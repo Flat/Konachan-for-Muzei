@@ -101,8 +101,10 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                          fDir.mkdirs();
                     }
                     String fileName;
+                    String[] temp;
                     String fileExtension;
-                    fileExtension =dlArt.getImageUri().toString().split(".")[1];
+                    temp =dlArt.getImageUri().toString().split("\\.");
+                    fileExtension = temp[temp.length-1];
                     if (dlArt.getTitle().length() > 200)
                     {
                         fileName = dlArt.getTitle().substring(0,200);
@@ -111,7 +113,7 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                     {
                         fileName = dlArt.getTitle();
                     }
-                    File file = new File(fDir, fileName + fileExtension);
+                    File file = new File(fDir, fileName +"." + fileExtension);
                     FileOutputStream fOut = new FileOutputStream(file);
                     float percentComplete =0;
                     int count =0;
