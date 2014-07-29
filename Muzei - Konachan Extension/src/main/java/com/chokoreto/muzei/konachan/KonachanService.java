@@ -19,6 +19,7 @@ interface KonachanService {
         String file_url;
         String tags;
         String author;
+        String md5;
     }
 
 }
