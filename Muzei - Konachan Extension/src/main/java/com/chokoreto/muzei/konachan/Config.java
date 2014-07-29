@@ -45,7 +45,6 @@ public class Config {
     public int getTimeSet(){
         return Integer.parseInt(prefs.getString("pref_refresh_time", "90"));
     }
-    public long getMD5Clear(){return Long.parseLong(prefs.getString("pref_clear_md5","60"));}
     public String getURLForLink(String booru){
         if(booru.equals("konachan.com")){
             return "http://konachan.net/post/show/";

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,20 +31,6 @@ public class SettingsActivity extends PreferenceActivity {
         bindPreferenceSummaryToValue(findPreference("pref_sort_order"));
         bindPreferenceSummaryToValue(findPreference("pref_refresh_time"));
         bindPreferenceSummaryToValue(findPreference("pref_booru"));
-        bindPreferenceSummaryToValue(findPreference("pref_clear_md5"));
-    }
-    @Override
-    public void onPause(){
-        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        if(prefs.getBoolean("pref_destroy_database", false)){
-            Database.DatabaseHelper dbHelper = new Database.DatabaseHelper(this);
-            SQLiteDatabase db = dbHelper.getWritableDatabase();
-            db.execSQL("DELETE FROM images");
-            db.close();
-            dbHelper.close();
-            prefs.edit().putBoolean("pref_destroy_database",false).apply();
-        }
-        super.onPause();
     }
 
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
