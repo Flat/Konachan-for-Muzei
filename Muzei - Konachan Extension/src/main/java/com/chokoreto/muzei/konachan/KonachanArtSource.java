@@ -5,6 +5,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -100,16 +102,14 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                     }
                     String fileName;
                     String fileExtension;
+                    fileExtension =dlArt.getImageUri().toString().split(".")[1];
                     if (dlArt.getTitle().length() > 200)
                     {
-                        fileName = dlArt.getTitle();
-                        fileExtension = ".png";
-                        fileName = fileName.substring(0,200);
+                        fileName = dlArt.getTitle().substring(0,200);
                     }
                     else
                     {
                         fileName = dlArt.getTitle();
-                        fileExtension = ".png";
                     }
                     File file = new File(fDir, fileName + fileExtension);
                     FileOutputStream fOut = new FileOutputStream(file);
@@ -195,10 +195,11 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 return;
             }
         }
+        removeStaleMD5(this);
         String serverBooru = config.getBooru();
         String strHyperText = config.getHyperTextProtocol(serverBooru);
         RestAdapter restAdapter = new RestAdapter.Builder()
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLogLevel(RestAdapter.LogLevel.NONE)
                 .setEndpoint(strHyperText + serverBooru)
                 .setErrorHandler(new ErrorHandler() {
                     @Override
@@ -235,16 +236,43 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
             return;
         }
 
-        Random random = new Random(System.currentTimeMillis());
         Posts post;
         String token;
+        Database.DatabaseHelper dbHelper = new Database.DatabaseHelper(this);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        int respCounter= 0;
         while (true) {
-            post = response.get(random.nextInt(response.size()));
+            Cursor cursor;
+            cursor = db.rawQuery("SELECT md5, timestamp FROM images WHERE md5=?", new String[] {response.get(respCounter).md5});
+            while(cursor.getCount() > 0 && respCounter + 1 <= response.size())
+            {
+                cursor.moveToFirst();
+                final long CLEAR_MD5_TIME_MILLIS = config.getMD5Clear() * 60 * 1000;
+                if(cursor.getLong(1) <= (System.currentTimeMillis() - CLEAR_MD5_TIME_MILLIS) && (System.currentTimeMillis() - CLEAR_MD5_TIME_MILLIS) > 0)
+                {
+                    db.execSQL("DELETE FROM images WHERE md5=? AND timestamp =?", new String[]{cursor.getString(0), cursor.getString(1)});
+                    break;
+                }
+                else {
+                    if (respCounter + 1 >= response.size()) {
+                        break;
+                    }
+                    Log.i(TAG, "RESPCOUNTER: " + Integer.toString(respCounter));
+                    respCounter += 1;
+                    cursor = db.rawQuery("SELECT md5, timestamp FROM images WHERE md5=?", new String[]{response.get(respCounter).md5});
+                }
+            }
+            post = response.get(respCounter);
+            db.execSQL("INSERT INTO images (md5, timestamp) VALUES (?, ?)",new String[] {post.md5, Long.toString(System.currentTimeMillis())});
             token = Integer.toString(post.id);
             if (response.size() <= 1 || !TextUtils.equals(token, currentToken)) {
                 break;
             }
+            cursor.close();
+            break;
         }
+        dbHelper.close();
+        db.close();
 
         publishArtwork(new Artwork.Builder()
                 .title(post.tags)
@@ -292,4 +320,14 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
     }
+    public static void removeStaleMD5(Context context){
+        Config config = new Config(context);
+        final long CLEAR_MD5_TIME_MILLIS = config.getMD5Clear() * 60 * 1000;
+        Database.DatabaseHelper dbHelper = new Database.DatabaseHelper(context);
+        SQLiteDatabase dbWrite = dbHelper.getWritableDatabase();
+        dbWrite.execSQL("DELETE FROM images WHERE timestamp <= ?",new String[] {Long.toString(System.currentTimeMillis() - CLEAR_MD5_TIME_MILLIS)});
+        dbWrite.close();
+        dbHelper.close();
+    }
+
 }

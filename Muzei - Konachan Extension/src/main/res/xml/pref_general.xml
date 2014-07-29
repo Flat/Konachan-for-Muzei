@@ -3,7 +3,7 @@
     <ListPreference
         android:key="pref_booru"
         android:title="@string/pref_booru_title"
-        android:defaultValue="0"
+        android:defaultValue="konachan.com"
         android:entries="@array/pref_booru_selections"
         android:entryValues="@array/pref_booru_selections_values"
         android:negativeButtonText="@null"
@@ -21,7 +21,7 @@
     <ListPreference
         android:key="pref_sort_order"
         android:title="@string/pref_title_sort_order"
-        android:defaultValue="order:score"
+        android:defaultValue="score"
         android:entries="@array/pref_sort_options"
         android:entryValues="@array/pref_sort_options_values"
         android:negativeButtonText="@null"
@@ -31,11 +31,21 @@
         <ListPreference
             android:key="pref_refresh_time"
             android:title="@string/pref_refresh_time_title"
-            android:defaultValue="90"
+            android:defaultValue="180"
             android:entries="@array/pref_refresh_time_options"
             android:entryValues="@array/pref_refresh_time_values"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null" />
+        <ListPreference
+            android:key="pref_clear_md5"
+            android:title="Image Freshness"
+            android:summary="How long images are blocked from being repeated"
+            android:defaultValue="60"
+            android:entries="@array/pref_clear_md5_options"
+            android:entryValues="@array/pref_clear_md5_values"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            />
         <CheckBoxPreference
             android:key="pref_wifi"
             android:title="@string/pref_wifi"
@@ -52,6 +62,17 @@
         android:summaryOn="Restricts content to only safe"
         android:summaryOff="Non-safe images are currently allowed"
         />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Database">
+        <com.chokoreto.muzei.konachan.OptionDialogPreference
+            android:key="pref_destroy_database"
+            android:title="Clear Database"
+            android:dialogTitle="Clear Database"
+            android:dialogMessage="Are you sure you want to clear the database?"
+            android:negativeButtonText="Cancel"
+            android:positiveButtonText="Yes"
+
+            />
     </PreferenceCategory>
 <!--
 
