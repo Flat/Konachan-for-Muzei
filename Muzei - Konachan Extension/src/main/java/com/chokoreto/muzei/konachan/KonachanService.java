@@ -20,6 +20,7 @@ interface KonachanService {
         String tags;
         String author;
         String md5;
+        String hash;
     }
 
 }

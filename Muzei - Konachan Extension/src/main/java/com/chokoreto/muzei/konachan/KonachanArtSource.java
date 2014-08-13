@@ -245,7 +245,7 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
         int respCounter= 0;
         while (true) {
             Cursor cursor;
-            cursor = db.rawQuery("SELECT md5, timestamp FROM images WHERE md5=?", new String[] {response.get(respCounter).md5});
+            cursor = db.rawQuery("SELECT md5, timestamp FROM images WHERE md5=?", new String[] {getproperMD5(response,respCounter,this)});
             while(cursor.getCount() > 0 && respCounter + 1 <= response.size())
             {
                 cursor.moveToFirst();
@@ -261,7 +261,7 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                     }
                     Log.i(TAG, "RESPCOUNTER: " + Integer.toString(respCounter));
                     respCounter += 1;
-                    cursor = db.rawQuery("SELECT md5, timestamp FROM images WHERE md5=?", new String[]{response.get(respCounter).md5});
+                    cursor = db.rawQuery("SELECT md5, timestamp FROM images WHERE md5=?", new String[]{getproperMD5(response,respCounter,this)});
                 }
             }
             post = response.get(respCounter);
@@ -330,6 +330,16 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
         dbWrite.execSQL("DELETE FROM images WHERE timestamp <= ?",new String[] {Long.toString(System.currentTimeMillis() - CLEAR_MD5_TIME_MILLIS)});
         dbWrite.close();
         dbHelper.close();
+    }
+    public static String getproperMD5(List<Posts> response, int responseID, Context context){
+        Config config = new Config(context);
+        String serverBooru = config.getBooru();
+        if (serverBooru.equals("gelbooru.com")){
+            return response.get(responseID).hash;
+        }
+        else{
+            return response.get(responseID).md5;
+        }
     }
 
 }
