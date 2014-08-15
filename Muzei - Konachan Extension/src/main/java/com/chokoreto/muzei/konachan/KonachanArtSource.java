@@ -206,9 +206,12 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 .setErrorHandler(new ErrorHandler() {
                     @Override
                     public Throwable handleError(RetrofitError retrofitError) {
-                        int statusCode = retrofitError.getResponse().getStatus();
                         Log.e(TAG,retrofitError.getUrl()+ "\n"+ retrofitError.getBody());
-                        if (retrofitError.isNetworkError() || (500 <= statusCode && statusCode < 600)) {
+                        if (retrofitError.isNetworkError()) {
+                            return new RetryException();
+                        }
+                        int statusCode = retrofitError.getResponse().getStatus();
+                        if((500 <= statusCode && statusCode < 600)){
                             return new RetryException();
                         }
                         scheduleUpdate(System.currentTimeMillis() + ROTATE_TIME_MILLIS);
@@ -227,7 +230,13 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
         mapQueries.put("limit",Config.limit);
 
         KonachanService service = restAdapter.create(KonachanService.class);
-        List<Posts> response = service.getPopularPosts(config.getAPIString(serverBooru),mapQueries);
+        List<Posts> response;
+        try{
+            response = service.getPopularPosts(config.getAPIString(serverBooru),mapQueries);
+        }
+        catch(Exception e){
+            response = null;
+        }
 
         if (response == null) {
             throw new RetryException();
@@ -265,7 +274,7 @@ public class KonachanArtSource extends RemoteMuzeiArtSource {
                 }
             }
             post = response.get(respCounter);
-            db.execSQL("INSERT INTO images (md5, timestamp) VALUES (?, ?)",new String[] {post.md5, Long.toString(System.currentTimeMillis())});
+            db.execSQL("INSERT INTO images (md5, timestamp) VALUES (?, ?)",new String[] {getproperMD5(response,respCounter,this), Long.toString(System.currentTimeMillis())});
             token = Integer.toString(post.id);
             if (response.size() <= 1 || !TextUtils.equals(token, currentToken)) {
                 break;
